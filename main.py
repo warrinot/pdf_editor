@@ -29,7 +29,7 @@ def split_doc(filename: str, pages_to_split: list, new_name: str, onefile: bool)
         new_file_name = os.path.join(folder, new_name)
         print(new_file_name)
     else:  # original name
-        new_file_name = os.path.splitext(filename)[0]
+        new_file_name = os.path.splitext(filename)[0] + '_new'
         print(new_file_name)
 
     if onefile:
@@ -59,8 +59,9 @@ def split_doc(filename: str, pages_to_split: list, new_name: str, onefile: bool)
 
 def main():
     sg.theme('Dark Blue 3')
-    layout = [[sg.Button('Split')],
-              [sg.Button('Merge')]
+    layout = [[sg.Text('Выберите действие:')],
+              [sg.Button('Split')],
+              [sg.Button('Merge(under development)', disabled=True)]
               ]
     window = sg.Window('Pdf things', layout)
 
@@ -84,13 +85,23 @@ def main():
 
 def split_window():
     layout_split = [[sg.Text('Выберите pdf файл, который нужно разделить')],
-                    [sg.In(disabled=True), sg.FileBrowse(file_types=(("Pdf-file", "*.pdf"),), key='file_to_split')],
-                    [sg.Text('Введите номера страниц(оставить пустым, \
-если нужно разделить весь документ)')], [sg.Input(key='-IN-', enable_events=True)],
-                    [sg.Radio('Сохранить отдельно каждую страницу', "RADIO1", default=True, key='radio1'),
+
+                    [sg.In(disabled=True), sg.FileBrowse(file_types=(("Pdf-file", "*.pdf"),),
+                                                         key='file_to_split')],
+
+                    [sg.Text('Введите номера страниц, которые нужно отделить')],
+
+                    [sg.Input(key='-IN-', enable_events=True,
+                              tooltip=('Введите номера страниц через запятую или оставьте пустым, '
+                                       'чтобы разделить весь документ\n'))],
+
+                    [sg.Radio('Сохранить страницы отдельно', "RADIO1", default=True, key='radio1'),
                      sg.Radio('Сохранить одним файлом', "RADIO1", key='radio2')],
+
                     [sg.Text('Имя нового файла'), sg.Input(disabled=False, key='new_name')],
+
                     [sg.Button('Split'), sg.Exit()]]
+
     window_split = sg.Window('Pdf Split', layout_split)
 
     while True:
