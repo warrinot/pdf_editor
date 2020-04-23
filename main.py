@@ -27,10 +27,8 @@ def split_doc(filename: str, pages_to_split: list, new_name: str, onefile: bool)
 
     if new_name:  # new_name if specified
         new_file_name = os.path.join(folder, new_name)
-        print(new_file_name)
     else:  # original name
         new_file_name = os.path.splitext(filename)[0] + '_new'
-        print(new_file_name)
 
     if onefile:
         pdf_writer = PyPDF2.PdfFileWriter()
@@ -106,7 +104,6 @@ def split_window():
 
     while True:
         event, values = window_split.read(timeout=100)
-        # print(event, values)
         if event is None or event == 'Exit':
             break
 
@@ -115,12 +112,11 @@ def split_window():
 
         elif event == 'Split':
 
-            print(event, values)
             file_to_split = values['file_to_split']
             pages_to_split = find_pages(values['-IN-'])
-            print(pages_to_split)
             new_file_name = values['new_name']
             onefile = values['radio2']
+
             try:
                 split_doc(file_to_split, pages_to_split, new_file_name, onefile)
             except FileNotFoundError:
