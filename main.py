@@ -4,7 +4,7 @@ import PyPDF2
 import os
 
 
-def find_pages(string_of_pages):
+def find_pages(string_of_pages: list()):
     if '-' in string_of_pages:
         page_nums = string_of_pages.split('-')
         page_nums = list(range(int(page_nums[0]) - 1, int(page_nums[1])))
@@ -16,26 +16,34 @@ def find_pages(string_of_pages):
 
 
 def split_doc(filename: str, pages_to_split: list, new_name: str, onefile: bool):
-    pdf_file = open(filename, 'rb')
-    pdf_reader = PyPDF2.PdfFileReader(pdf_file, strict=False)
-    folder = os.path.split(filename)[0]
+    pdf_file = open(filename, 'rb')  # open pdf_file
+    pdf_reader = PyPDF2.PdfFileReader(pdf_file, strict=False)  # init pdf_reader
+    folder = os.path.split(filename)[0]  # folder to save in original file's folder
 
     num_pages = pdf_reader.numPages
 
-    if not pages_to_split:
+    if not pages_to_split:  # full doc, if pages not specified
         pages_to_split = range(num_pages)
 
-    if new_name:
+    if new_name:  # new_name if specified
         new_file_name = os.path.join(folder, new_name)
         print(new_file_name)
-    else:
+    else:  # original name
         new_file_name = os.path.splitext(filename)[0]
         print(new_file_name)
 
     if onefile:
+        pdf_writer = PyPDF2.PdfFileWriter()
+        for page in range(num_pages):
+            if page not in pages_to_split:
+                continue
+            page_object = pdf_reader.getPage(page)
+            pdf_writer.addPage(page_object)
+        new_file = open(f'{new_file_name}.pdf', 'wb')
+        pdf_writer.write(new_file)
+        new_file.close()
 
-        pass
-    else:
+    else:  # multiple files
         for page in range(num_pages):
             if page not in pages_to_split:
                 continue
@@ -46,9 +54,6 @@ def split_doc(filename: str, pages_to_split: list, new_name: str, onefile: bool)
             pdf_writer.write(new_file)
             new_file.close()
 
-
-
-    
     pdf_file.close()
 
 
@@ -58,8 +63,10 @@ def main():
               [sg.Button('Merge')]
               ]
     window = sg.Window('Pdf things', layout)
+
     while True:
         event, values = window.read()
+
         if event is None or event == 'Exit':
             break
         elif event == 'Split':
@@ -71,6 +78,7 @@ def main():
             window.Hide()
             merge_window()
             window.UnHide()
+
     window.close()
 
 
@@ -81,7 +89,7 @@ def split_window():
 если нужно разделить весь документ)')], [sg.Input(key='-IN-', enable_events=True)],
                     [sg.Radio('Сохранить отдельно каждую страницу', "RADIO1", default=True, key='radio1'),
                      sg.Radio('Сохранить одним файлом', "RADIO1", key='radio2')],
-                    [sg.Text('Имя нового файла'), sg.Input(disabled=True, key='new_name')],
+                    [sg.Text('Имя нового файла'), sg.Input(disabled=False, key='new_name')],
                     [sg.Button('Split'), sg.Exit()]]
     window_split = sg.Window('Pdf Split', layout_split)
 
@@ -102,14 +110,15 @@ def split_window():
             print(pages_to_split)
             new_file_name = values['new_name']
             onefile = values['radio2']
-            split_doc(file_to_split, pages_to_split, new_file_name, onefile)
-        else:
-            pass
-            # print(event, values)
-        if values['radio2']:
-            window_split['new_name'].Update(disabled=False)
-        else:
-            window_split['new_name'].Update(disabled=True)
+            try:
+                split_doc(file_to_split, pages_to_split, new_file_name, onefile)
+            except FileNotFoundError:
+                sg.popup_ok('Не выбран файл.')
+
+        # if values['radio2']:
+            # window_split['new_name'].Update(disabled=False)
+        # else:
+            # window_split['new_name'].Update(disabled=True)
     window_split.close()
 
 
