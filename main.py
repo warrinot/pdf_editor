@@ -2,7 +2,6 @@ import PySimpleGUI as sg
 import re
 import PyPDF2
 import os
-import time
 
 
 def find_pages(string_of_pages: list()):
@@ -116,7 +115,7 @@ def split_window():
                     [sg.Button('Split'), sg.Exit()]]
 
     window_split = sg.Window('Pdf Split', layout_split, return_keyboard_events=True)
-    event, values = window_split.read(timeout=1)  # read 1 time to initiate
+    window_split.Finalize()
     window_split.TKroot.focus_force()  # make active
 
     while True:
@@ -140,10 +139,6 @@ def split_window():
             except FileNotFoundError:
                 sg.popup_ok('Не выбран файл.')
 
-        # if values['radio2']:
-            # window_split['new_name'].Update(disabled=False)
-        # else:
-            # window_split['new_name'].Update(disabled=True)
     window_split.close()
 
 
@@ -168,7 +163,7 @@ def merge_window():
     ]
 
     window_merge = sg.Window('Pdf merge', layout_merge, return_keyboard_events=True)
-    vent, values = window_merge.read(timeout=1)  # read 1 time to initiate
+    window_merge.Finalize()
     window_merge.TKroot.focus_force()  # make active
 
     while True:
