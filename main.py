@@ -2,6 +2,7 @@ import PySimpleGUI as sg
 import re
 import PyPDF2
 import os
+import time
 
 
 def find_pages(string_of_pages: list()):
@@ -55,19 +56,33 @@ def split_doc(filename: str, pages_to_split: list, new_name: str, onefile: bool)
     pdf_file.close()
 
 
+def merge_docs(filenames, saveas):
+    pdf_merger = PyPDF2.PdfFileMerger()
+    for file in filenames:
+        pdf_file = open(file, 'rb')
+
+        pdf_merger.append(pdf_file)
+
+    new_file = open(saveas, 'wb')
+    pdf_merger.write(new_file)
+    new_file.close()
+    pdf_file.close()
+
+
 def main():
     sg.theme('Dark Blue 3')
     layout = [[sg.Text('Выберите действие:')],
               [sg.Button('Split')],
-              [sg.Button('Merge(under development)', disabled=True)]
+              [sg.Button('Merge', disabled=False)]
               ]
-    window = sg.Window('Pdf things', layout)
+    window = sg.Window('Pdf things', layout, return_keyboard_events=True)
 
     while True:
         event, values = window.read()
 
-        if event is None or event == 'Exit':
+        if event is None or event == 'Exit' or event == 'Escape:27':
             break
+
         elif event == 'Split':
             window.Hide()
             split_window()
@@ -100,14 +115,17 @@ def split_window():
 
                     [sg.Button('Split'), sg.Exit()]]
 
-    window_split = sg.Window('Pdf Split', layout_split)
+    window_split = sg.Window('Pdf Split', layout_split, return_keyboard_events=True)
+    event, values = window_split.read(timeout=1)  # read 1 time to initiate
+    window_split.TKroot.focus_force()  # make active
 
     while True:
         event, values = window_split.read(timeout=100)
-        if event is None or event == 'Exit':
+
+        if event is None or event == 'Exit' or event == 'Escape:27':
             break
 
-        if event == '-IN-' and values['-IN-'] and values['-IN-'][-1] not in ('0123456789, -'):
+        elif event == '-IN-' and values['-IN-'] and values['-IN-'][-1] not in ('0123456789, -'):
             window_split['-IN-'].update(values['-IN-'][:-1])
 
         elif event == 'Split':
@@ -130,16 +148,56 @@ def split_window():
 
 
 def merge_window():
-    layout_merge = [[sg.Text('Выберите pdf файл')]]
-    window_merge = sg.Window('Pdf merge', layout_merge)
+    layout_merge = [
+        [sg.Text('Выберите pdf файлы, которые нужно объединить')],
+
+        [sg.In(key='-FILE_INPUT-', disabled=True, enable_events=True),
+         sg.FilesBrowse(file_types=(("Pdf-file", "*.pdf"),))],
+
+        [sg.Text('Сохранить как:')],
+
+        [sg.In(disabled=True, enable_events=True, key='-SAVEASIN-'),
+         sg.SaveAs(enable_events=True, file_types=(("Pdf-file", ".pdf"),),)],
+
+        [sg.Button('Merge'), sg.Exit()],
+
+
+
+
+
+    ]
+
+    window_merge = sg.Window('Pdf merge', layout_merge, return_keyboard_events=True)
+    vent, values = window_merge.read(timeout=1)  # read 1 time to initiate
+    window_merge.TKroot.focus_force()  # make active
 
     while True:
         event, values = window_merge.read()
-        if event is None or event == 'Exit':
+        if event is None or event == 'Exit' or event == 'Escape:27':
             break
 
+        elif event == '-SAVEASIN-':
+            saveas_value = values['-SAVEASIN-']
+            if not saveas_value.endswith('.pdf'):
+                saveas_value += '.pdf'
+            window_merge['-SAVEASIN-'].Update(saveas_value)
+
         elif event == 'Merge':
-            pass
+            saveas_value = values['-SAVEASIN-']
+            input_files = values['-FILE_INPUT-'].split(';')
+            input_len = len(input_files)
+
+            if not input_files[0]:
+                sg.PopupOK('Вы не выбрали файлы.')
+
+            elif input_len == 1:
+                sg.PopupOK('Выбран только 1 файл, требуется минимум 2')
+
+            elif not saveas_value:
+                sg.PopupOK('Сохраните файл')
+
+            else:
+                merge_docs(input_files, saveas_value)
 
     window_merge.close()
 
