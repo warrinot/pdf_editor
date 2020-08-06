@@ -1,2 +1,2 @@
 # pdf_editor
-Simple app that can merge or split pdf files.
+App developed with PySimpleGUI that can merge or split pdf files.
